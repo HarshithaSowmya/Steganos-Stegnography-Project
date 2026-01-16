@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SteganoS | Secure Data Hiding</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(rgba(240, 253, 244, 0.94), rgba(240, 253, 244, 0.94)), 
+                        url('bg.png'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+        }
+
+        /* 1. HIGHLIGHTED BACKGROUND SECTION */
+        .hero-section {
+            background: linear-gradient(135deg, rgba(6, 78, 59, 0.9) 0%, rgba(6, 95, 70, 0.8) 100%), 
+                        url('bg.png');
+            background-size: cover;
+            background-position: center;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-bottom: 6px solid #10b981; /* Accent highlight */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Animated glow for the background highlight */
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at center, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+            animation: pulse-glow 4s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .workspace-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .hidden { display: none; }
+        
+        @media (max-width: 640px) {
+            .workspace-card { padding: 1.5rem; }
+            h2 { font-size: 1.75rem !important; }
+            .hero-section { min-height: 450px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="bg-[#064e3b] text-white p-4 sticky top-0 z-50 shadow-xl">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold tracking-tighter italic uppercase cursor-pointer" onclick="showSection('home')">
+                STEGANO<span class="text-green-400">S</span>
+            </h1>
+            <div class="space-x-6 text-sm font-medium">
+                <a href="#" onclick="showSection('home')" class="hover:text-green-400 transition">Home</a>
+                <a href="#" onclick="showSection('selection')" class="hover:text-green-400 transition">Tools</a>
+                <a href="#" onclick="showSection('about')" class="hover:text-green-400 transition">About</a>
+            </div>
+        </div>
+    </nav>
+
+    <section id="home" class="hero-section text-center text-white px-4">
+        <div class="max-w-4xl relative z-10">
+            <h2 class="text-5xl md:text-7xl font-bold mb-6 tracking-tight">Secure Your Data in Plain Sight</h2>
+            <p class="text-xl text-green-50 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Hide confidential text or entire images inside other images using advanced pixel-level LSB steganography.
+            </p>
+            <button onclick="showSection('selection')" class="bg-[#10b981] hover:bg-[#059669] px-12 py-5 rounded-full text-lg font-bold transition transform hover:scale-105 shadow-2xl">
+                Get Started Now
+            </button>
+        </div>
+    </section>
+
+    <section id="selection" class="container mx-auto py-16 px-4 hidden">
+        <div class="grid md:grid-cols-2 gap-10 max-w-4xl mx-auto">
+            <div class="glass-card p-12 rounded-3xl text-center cursor-pointer border-2 border-transparent hover:border-emerald-500" onclick="showTool('encryption')">
+                <i class="fas fa-lock text-5xl text-emerald-600 mb-6"></i>
+                <h3 class="text-2xl font-bold mb-2">Encrypt</h3>
+                <p class="text-gray-600">Securely hide data into an image</p>
+            </div>
+            <div class="glass-card p-12 rounded-3xl text-center cursor-pointer border-2 border-transparent hover:border-emerald-500" onclick="showTool('decryption')">
+                <i class="fas fa-unlock text-5xl text-emerald-600 mb-6"></i>
+                <h3 class="text-2xl font-bold mb-2">Decrypt</h3>
+                <p class="text-gray-600">Extract hidden data from an image</p>
+            </div>
+        </div>
+    </section>
+
+    <main id="app" class="container mx-auto py-10 px-4 hidden">
+        <div class="max-w-3xl mx-auto">
+            <button onclick="showSection('selection')" class="mb-6 text-emerald-800 font-semibold hover:text-emerald-600 transition flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Selection
+            </button>
+
+            <div id="encryptionPanel" class="workspace-card hidden">
+                <h3 class="text-2xl font-bold mb-6 text-emerald-900 border-b pb-2">Encryption Vault</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Mode</label>
+                        <select id="encMode" onchange="toggleMode()" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <option value="text">Hide Text Message</option>
+                            <option value="image">Hide Secret Image</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Carrier Image (Cover)</label>
+                        <input type="file" id="carrierInput" accept="image/*" class="w-full p-2 border rounded-lg text-sm">
+                    </div>
+                    <div id="textInputGroup">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Secret Message</label>
+                        <textarea id="secretText" placeholder="Enter your secret data..." class="w-full p-3 border rounded-lg h-24 focus:ring-2 focus:ring-emerald-500 outline-none"></textarea>
+                    </div>
+                    <div id="imageInputGroup" class="hidden">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Secret Image (To Hide)</label>
+                        <input type="file" id="secretImgInput" accept="image/*" class="w-full p-2 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Protection Password</label>
+                        <input type="password" id="encPass" placeholder="Set a password" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <button onclick="processEncryption()" class="w-full bg-[#064e3b] text-white py-4 rounded-xl font-bold hover:bg-black transition shadow-lg">Process & Download</button>
+                    <div id="downloadArea" class="hidden mt-6 p-4 bg-emerald-50 rounded-lg text-center border-2 border-dashed border-emerald-200">
+                        <p class="text-emerald-800 font-bold mb-2">Process Complete!</p>
+                        <a id="downloadLink" href="#" download="steganos_vault.png" class="text-emerald-600 underline font-bold">Download Stego-Image</a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="decryptionPanel" class="workspace-card hidden">
+                <h3 class="text-2xl font-bold mb-6 text-emerald-900 border-b pb-2">Decryption Key</h3>
+                <div class="space-y-4">
+                    <p class="text-sm text-gray-500 mb-2 italic">Upload an image to detect and extract hidden text or images.</p>
+                    <input type="file" id="decryptInput" accept="image/*" class="w-full p-2 border rounded-lg text-sm">
+                    <input type="password" id="decPass" placeholder="Enter password to unlock" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <button onclick="processDecryption()" class="w-full bg-emerald-800 text-white py-4 rounded-xl font-bold shadow-lg">Extract Data</button>
+                    
+                    <div id="resultArea" class="hidden mt-6 p-6 bg-gray-50 border rounded-xl">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-bold text-emerald-900">Extracted Result:</h4>
+                            <span id="resultTypeBadge" class="px-3 py-1 bg-emerald-200 text-emerald-800 text-xs font-bold rounded-full uppercase tracking-wider"></span>
+                        </div>
+                        <div id="textResult" class="p-3 bg-white border rounded font-mono text-gray-800 break-words hidden"></div>
+                        <img id="imageResult" class="max-w-full rounded hidden mx-auto shadow-md border bg-white">
+                        
+                        <div id="decDownloadArea" class="hidden mt-4 text-center">
+                            <button onclick="downloadDecryptedImage()" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-emerald-700 transition">
+                                <i class="fas fa-download mr-2"></i>Download Secret Image
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <section id="about" class="container mx-auto py-16 px-4 hidden">
+        <div class="max-w-4xl mx-auto workspace-card">
+            <h2 class="text-4xl font-bold text-[#064e3b] mb-6 text-center">
+                <i class="fas fa-info-circle mr-3"></i>What is Steganography?
+            </h2>
+            
+            <div class="space-y-6 text-gray-700 leading-relaxed">
+                <p class="text-lg">
+                    Steganography is the art and science of concealing information within a non-secret medium. Unlike cryptography, which scrambles a message, steganography hides the very <strong>existence</strong> of the communication.
+                </p>
+                
+                <div class="bg-emerald-50 p-6 rounded-xl border-l-4 border-emerald-600 shadow-sm">
+                    <h3 class="text-xl font-bold text-emerald-900 mb-2 underline">
+                        <i class="fas fa-history mr-2"></i>Etymology & History
+                    </h3>
+                    <p>Derived from the Greek words <span class="italic font-bold">"steganos"</span> (hidden) and <span class="italic font-bold">"graphein"</span> (to write). From ancient hidden tattoos to digital pixel manipulation, it has been a core security tactic for centuries.</p>
+                </div>
+
+                <div class="py-8">
+                    <h3 class="text-2xl font-bold text-emerald-800 mb-6 text-center">
+                        <i class="fas fa-cogs mr-2"></i>How It Works (LSB Method)
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center mt-6">
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <span class="bg-emerald-600 text-white px-2 py-1 rounded text-xs mr-3 mt-1 font-bold">1</span>
+                                <span><strong>Binary Conversion:</strong> The secret data is converted into a binary string (0s and 1s).</span>
+                            </div>
+                            <div class="flex items-start">
+                                <span class="bg-emerald-600 text-white px-2 py-1 rounded text-xs mr-3 mt-1 font-bold">2</span>
+                                <span><strong>Pixel Modification:</strong> The "Least Significant Bit" of each pixel color channel is replaced with a secret bit.</span>
+                            </div>
+                            <div class="flex items-start">
+                                <span class="bg-emerald-600 text-white px-2 py-1 rounded text-xs mr-3 mt-1 font-bold">3</span>
+                                <span><strong>Visual Integrity:</strong> Because the change is so minute, the color shift is invisible to the human eye.</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-100 p-4 rounded-lg font-mono text-xs">
+                            <p class="font-bold mb-2 text-emerald-700">// LSB Example</p>
+                            <p>Original Pixel: <span class="bg-red-100">1011010<span class="font-bold text-red-600">0</span></span></p>
+                            <p>Secret Bit: 1</p>
+                            <p>Stego Pixel: <span class="bg-green-100">1011010<span class="font-bold text-green-600">1</span></span></p>
+                            <p class="mt-2 text-gray-500 italic text-[10px]">*Difference is 1/255th of color intensity.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="text-2xl font-bold text-emerald-800 mb-4 text-center">
+                    <i class="fas fa-layer-group mr-2"></i>Types of Steganography
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="p-4 bg-white rounded-lg border border-emerald-100 text-center shadow-sm">
+                        <i class="fas fa-font text-emerald-500 mb-2 block text-xl"></i><strong>Text</strong>
+                    </div>
+                    <div class="p-4 bg-white rounded-lg border border-emerald-100 text-center shadow-sm">
+                        <i class="fas fa-image text-emerald-500 mb-2 block text-xl"></i><strong>Image</strong>
+                    </div>
+                    <div class="p-4 bg-white rounded-lg border border-emerald-100 text-center shadow-sm">
+                        <i class="fas fa-file-audio text-emerald-500 mb-2 block text-xl"></i><strong>Audio</strong>
+                    </div>
+                    <div class="p-4 bg-white rounded-lg border border-emerald-100 text-center shadow-sm">
+                        <i class="fas fa-video text-emerald-500 mb-2 block text-xl"></i><strong>Video</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="manual" class="container mx-auto py-10 px-4">
+        <div class="max-w-4xl mx-auto workspace-card bg-[#064e3b] text-white">
+            <h2 class="text-3xl font-bold mb-8 flex items-center">
+                <i class="fas fa-book-open mr-3"></i> How to Use SteganoS
+            </h2>
+            <div class="grid md:grid-cols-2 gap-10">
+                <div>
+                    <h4 class="text-xl font-bold mb-4 text-green-400">Step 1: Encryption</h4>
+                    <ul class="space-y-3 text-sm text-green-50">
+                        <li><i class="fas fa-check-circle mr-2 text-green-400"></i> Select <b>Encrypt</b> from the Tools menu.</li>
+                        <li><i class="fas fa-check-circle mr-2 text-green-400"></i> Upload a "Carrier Image" (the cover).</li>
+                        <li><i class="fas fa-check-circle mr-2 text-green-400"></i> Type a message or upload a secret image.</li>
+                        <li><i class="fas fa-check-circle mr-2 text-green-400"></i> <b>Crucial:</b> Set a password to lock the data.</li>
+                        <li><i class="fas fa-check-circle mr-2 text-green-400"></i> Download the processed "Stego-Image".</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-xl font-bold mb-4 text-green-400">Step 2: Decryption</h4>
+                    <ul class="space-y-3 text-sm text-green-50">
+                        <li><i class="fas fa-check-circle mr-2 text-green-400"></i> Select <b>Decrypt</b> from the Tools menu.</li>
+                        <li><i class="fas fa-check-circle mr-2 text-green-400"></i> Upload the image containing hidden data.</li>
+                        <li><i class="fas fa-check-circle mr-2 text-green-400"></i> Enter the password used during encryption.</li>
+                        <li><i class="fas fa-check-circle mr-2 text-green-400"></i> Click "Extract" to reveal the secret contents.</li>
+                        <li><i class="fas fa-check-circle mr-2 text-green-400"></i> Download the revealed image if applicable.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-8 p-4 bg-[#043d2e] rounded-lg border border-green-800 italic text-xs">
+                Note: This tool uses pixel-level manipulation. For best results, use lossless formats like PNG. JPEG compression may corrupt hidden data.
+            </div>
+        </div>
+    </section>
+
+    <canvas id="canvas" class="hidden"></canvas>
+    <canvas id="hCanvas" class="hidden"></canvas>
+
+    <script>
+        function showSection(id) {
+            ['home', 'selection', 'app', 'about'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function showTool(tool) {
+            showSection('app');
+            document.getElementById('encryptionPanel').classList.toggle('hidden', tool !== 'encryption');
+            document.getElementById('decryptionPanel').classList.toggle('hidden', tool !== 'decryption');
+            document.getElementById('resultArea').classList.add('hidden');
+        }
+
+        function toggleMode() {
+            const isText = document.getElementById('encMode').value === 'text';
+            document.getElementById('textInputGroup').classList.toggle('hidden', !isText);
+            document.getElementById('imageInputGroup').classList.toggle('hidden', isText);
+        }
+
+        async function processEncryption() {
+            const carrierFile = document.getElementById('carrierInput').files[0];
+            const password = document.getElementById('encPass').value;
+            if (!carrierFile || !password) return alert("Please fill required fields.");
+
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = await loadImage(carrierFile);
+            canvas.width = img.width; canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            let binData = "";
+            if (document.getElementById('encMode').value === 'text') {
+                const text = document.getElementById('secretText').value;
+                const payload = `TXT|${password}|${text}###END###`;
+                binData = payload.split('').map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join('');
+            } else {
+                const sFile = document.getElementById('secretImgInput').files[0];
+                if(!sFile) return alert("Select secret image");
+                const sImg = await loadImage(sFile);
+                const hc = document.getElementById('hCanvas');
+                hc.width = 100; hc.height = 100;
+                hc.getContext('2d').drawImage(sImg, 0, 0, 100, 100);
+                const sData = hc.getContext('2d').getImageData(0,0,100,100).data;
+                binData = `IMG|${password}|`.split('').map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join('');
+                for(let i=0; i<sData.length; i++) binData += sData[i].toString(2).padStart(8, '0');
+                binData += "00100011".repeat(6);
+            }
+
+            for (let i = 0; i < binData.length; i++) {
+                imageData.data[i * 4] = (imageData.data[i * 4] & 0xFE) | parseInt(binData[i]);
+            }
+            ctx.putImageData(imageData, 0, 0);
+            document.getElementById('downloadLink').href = canvas.toDataURL();
+            document.getElementById('downloadArea').classList.remove('hidden');
+        }
+
+        async function processDecryption() {
+            const file = document.getElementById('decryptInput').files[0];
+            const password = document.getElementById('decPass').value;
+            if (!file) return;
+
+            const img = await loadImage(file);
+            const canvas = document.getElementById('canvas');
+            canvas.width = img.width; canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+            let bin = "";
+            for (let i = 0; i < data.length / 4; i++) bin += (data[i * 4] & 1).toString();
+
+            let text = "";
+            for (let i = 0; i < bin.length; i += 8) {
+                let char = String.fromCharCode(parseInt(bin.substr(i, 8), 2));
+                text += char;
+                if (text.includes("###END###") || text.length > 50000) break;
+            }
+
+            const resArea = document.getElementById('resultArea');
+            const txtRes = document.getElementById('textResult');
+            const imgRes = document.getElementById('imageResult');
+            const badge = document.getElementById('resultTypeBadge');
+            const decDownload = document.getElementById('decDownloadArea');
+
+            if (text.startsWith("TXT") && text.includes(`|${password}|`)) {
+                resArea.classList.remove('hidden');
+                badge.innerText = "Text Message";
+                txtRes.innerText = text.split(`|${password}|`)[1].split('###END###')[0];
+                txtRes.classList.remove('hidden'); imgRes.classList.add('hidden');
+                decDownload.classList.add('hidden');
+            } else if (text.startsWith("IMG") && text.includes(`|${password}|`)) {
+                resArea.classList.remove('hidden');
+                badge.innerText = "Hidden Image";
+                const offset = (text.split(`|${password}|`)[0].length + password.length + 2) * 8;
+                const hc = document.getElementById('hCanvas');
+                const hCtx = hc.getContext('2d');
+                const hId = hCtx.createImageData(100, 100);
+                for (let i = 0; i < 40000; i++) hId.data[i] = parseInt(bin.substr(offset + (i * 8), 8), 2);
+                hCtx.putImageData(hId, 0, 0);
+                imgRes.src = hc.toDataURL();
+                imgRes.classList.remove('hidden'); txtRes.classList.add('hidden');
+                decDownload.classList.remove('hidden');
+            } else {
+                alert("Incorrect password or no data found.");
+            }
+        }
+
+        // 2. HELPER FUNCTION FOR DECRYPTION DOWNLOAD
+        function downloadDecryptedImage() {
+            const imgRes = document.getElementById('imageResult');
+            const link = document.createElement('a');
+            link.download = 'extracted_secret.png';
+            link.href = imgRes.src;
+            link.click();
+        }
+
+        function loadImage(file) {
+            return new Promise(res => {
+                const img = new Image();
+                img.onload = () => res(img);
+                img.src = URL.createObjectURL(file);
+            });
+        }
+    </script>
+</body>
+</html>
